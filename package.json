@@ -1,0 +1,30 @@
+{
+  "name": "velements",
+  "version": "1.0.0",
+  "description": "Minimalistic JSX elements that do not require React",
+  "author": "Zoran Ravic <contact@zoranravic.com> (zoranravic.com)",
+  "license": "MIT",
+  "repository": "ZoranRavic/VElement",
+  "homepage": "https://zoranravic.com/",
+  "main": "index.js",
+  "files": [
+    "LICENSE",
+    "Readme.md",
+    "index.js",
+    "index.d.ts"
+  ],
+  "keywords": [
+    "velement",
+    "element",
+    "virtual",
+    "jsx",
+    "react",
+    "node",
+    "vnode",
+    "dom",
+    "vdom"
+  ],
+  "scripts": {
+    "prepublishOnly": "tsc"
+  }
+}

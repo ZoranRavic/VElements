@@ -1,6 +1,6 @@
 {
   "name": "velements",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Minimalistic JSX elements that do not require React",
   "author": "Zoran Ravic <contact@zoranravic.com> (zoranravic.com)",
   "license": "MIT",

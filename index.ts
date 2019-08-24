@@ -1,23 +1,32 @@
 
 export interface IElementBase
 {
-    toString(): string
-    toElement(): Node
+    toString(): string;
+    toElement(): Node;
 }
 
-export type ChildType = IElementBase | string
+export type ChildType = IElementBase | string | number | boolean | null | undefined;
 
-export const h = (name: string | [string, string], attrs?: { [attr:string]:string|any }, ...children: Array<ChildType|Array<ChildType>>): VElement =>
+export interface IAttributes
+{
+    id?: string;
+    class?: string;
+    className?: string;
+    style?: string;
+    [attr:string]: string | { [attr:string]: string } | any;
+}
+
+export const h = (name: string | [string, string], attrs?: IAttributes, ...children: Array<ChildType|Array<ChildType>>): VElement =>
     new VElement(name, attrs, ...children);
 
 export class VElement implements IElementBase
 {
     public namespace?: string;
     public name: string;
-    public attrs: { [attr:string]: string | { [attr:string]: string } };
+    public attrs: IAttributes;
     public children: Array<ChildType>;
 
-    constructor(name: string | [string, string], attrs?: { [attr:string]:string|any }, ...children: Array<ChildType|Array<ChildType>>)
+    constructor(name: string | [string, string], attrs?: IAttributes, ...children: Array<ChildType|Array<ChildType>>)
     {
         if (Array.isArray(name))
         {
@@ -36,7 +45,7 @@ export class VElement implements IElementBase
         this.attrs = {};
         if (attrs && typeof attrs === 'object')
         {
-            for (const attr in attrs)
+            for (let attr in attrs)
             {
                 const value = attrs[attr];
                 if (value != null)
@@ -49,13 +58,17 @@ export class VElement implements IElementBase
                             if (value[nsAttr] != null)
                             {
                                 this.attrs[ns] = this.attrs[ns] || {};
-                                this.attrs[ns][nsAttr] = value[nsAttr].toString();
+                                this.attrs[ns][nsAttr] = '' + value[nsAttr];
                             }
                         }
                     }
                     else
                     {
-                        this.attrs[attr] = value.toString();
+                        if (attr === 'className')
+                        {
+                            attr = 'class';
+                        }
+                        this.attrs[attr] = stringAttrs.indexOf(attr) >= 0 ? '' + value : value;
                     }
                 }
             }
@@ -84,7 +97,7 @@ export class VElement implements IElementBase
         }
         else
         {
-            this.attrs[attr] = val.toString();
+            this.attrs[attr] = '' + val;
             return this;
         }
     }
@@ -198,7 +211,7 @@ export class VElement implements IElementBase
                 }
                 else if (typeof value === 'function')
                 {
-                    const event = attr.indexOf('on') == 0 ? attr.substr(2) : attr;
+                    const event = attr.indexOf('on') == 0 ? attr.substr(2).toLowerCase() : attr;
                     element.addEventListener(event, value);
                 }
                 else
@@ -209,13 +222,16 @@ export class VElement implements IElementBase
         }
         for (const child of this.children)
         {
-            if (typeof child === 'string')
+            if (child != null && child !== false)
             {
-                element.appendChild(document.createTextNode(child));
-            }
-            else
-            {
-                element.appendChild(child.toElement());
+                if (isElementBase(child))
+                {
+                    element.appendChild(child.toElement());
+                }
+                else
+                {
+                    element.appendChild(document.createTextNode(''+child));
+                }
             }
         }
         return element;
@@ -225,7 +241,7 @@ export class VElement implements IElementBase
     public toReactElement(React);
     public toReactElement(React?)
     {
-        if (arguments.length == 0)
+        if (!React)
         {
             // @ts-ignore
             React = require('react'+'');
@@ -242,14 +258,12 @@ export class VElement implements IElementBase
                 children.push(child);
             }
         }
-        return typeof React === 'function' ?
-            React(this.name, this.attrs, children) :
-            React.createElement(this.name, this.attrs, children);
+        return (React.createElement || React)(this.name, this.attrs, children);
     }
 
     public get id(): string
     {
-        return this.attrs.id as string;
+        return this.attrs.id;
     }
     public set id(id: string)
     {
@@ -258,18 +272,18 @@ export class VElement implements IElementBase
 
     public get className(): string
     {
-        return this.attrs['class'] as string;
+        return this.attrs.class;
     }
     public set className(className: string)
     {
-        this.attrs['class'] = className;
+        this.attrs.class = className;
     }
 
     public addClasses(...names: Array<string>): this
     {
-        if (this.attrs['class'])
+        if (this.attrs.class)
         {
-            const list = (this.attrs['class'] as string).split(' ');
+            const list = this.attrs.class.split(' ');
             for (const name of names)
             {
                 if (list.indexOf(name) < 0)
@@ -277,20 +291,20 @@ export class VElement implements IElementBase
                     list.push(name);
                 }
             }
-            this.attrs['class'] = list.join(' ');
+            this.attrs.class = list.join(' ');
         }
         else
         {
-            this.attrs['class'] = names.join(' ');
+            this.attrs.class = names.join(' ');
         }
         return this;
     }
 
     public removeClasses(...names: Array<string>): this
     {
-        if (this.attrs['class'])
+        if (this.attrs.class)
         {
-            const list = (this.attrs['class'] as string).split(' ');
+            const list = this.attrs.class.split(' ');
             for (const name of names)
             {
                 const index = list.indexOf(name);
@@ -299,16 +313,16 @@ export class VElement implements IElementBase
                     list.splice(index, 1);
                 }
             }
-            this.attrs['class'] = list.join(' ');
+            this.attrs.class = list.join(' ');
         }
         return this;
     }
 
     public hasClasses(...names: Array<string>): boolean
     {
-        if (this.attrs['class'])
+        if (this.attrs.class)
         {
-            const list = (this.attrs['class'] as string).split(' ');
+            const list = this.attrs.class.split(' ');
             for (const name of names)
             {
                 if (list.indexOf(name) < 0)
@@ -326,7 +340,7 @@ export class VElement implements IElementBase
     public style(name: string, val: any): this;
     public style(name?: string, val?: any): this | string | { [attr:string]: string }
     {
-        const list = this.attrs['style'] ? (this.attrs['style'] as string).split(';') : [];
+        const list = this.attrs.style ? this.attrs.style.split(';') : [];
         const style: { [attr:string]: string } = {};
         for (const item of list)
         {
@@ -346,13 +360,13 @@ export class VElement implements IElementBase
         }
         else
         {
-            style[name] = val.toString();
+            style[name] = '' + val;
             let res = '';
             for (const key in style)
             {
                 res += key + ':' + style[key] + ';';
             }
-            this.attrs['style'] = res;
+            this.attrs.style= res;
             return this;
         }
     }
@@ -377,6 +391,13 @@ export class VComment implements IElementBase
         return this.text != null ? document.createComment(this.text) : document.createComment('');
     }
 }
+
+export function isElementBase(element): element is IElementBase
+{
+    return element && typeof element === 'object' && typeof element.toElement === 'function';
+}
+
+const stringAttrs = ['id', 'class', 'style'];
 
 const svgElementNames = [
     'a',

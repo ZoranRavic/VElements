@@ -4,7 +4,7 @@
   "description": "Minimalistic JSX elements that do not require React",
   "author": "Zoran Ravic <contact@zoranravic.com> (zoranravic.com)",
   "license": "MIT",
-  "repository": "ZoranRavic/VElement",
+  "repository": "ZoranRavic/VElements",
   "homepage": "https://zoranravic.com/",
   "main": "index.js",
   "files": [

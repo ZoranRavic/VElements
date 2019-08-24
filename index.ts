@@ -16,8 +16,12 @@ export interface IAttributes
     [attr:string]: string | { [attr:string]: string } | any;
 }
 
-export const h = (name: string | [string, string], attrs?: IAttributes, ...children: Array<ChildType|Array<ChildType>>): VElement =>
+export const createElement = (name: string | [string, string], attrs?: IAttributes, ...children: Array<ChildType|Array<ChildType>>): VElement =>
     new VElement(name, attrs, ...children);
+
+export default createElement;
+
+export const h = createElement;
 
 export class VElement implements IElementBase
 {
@@ -238,7 +242,8 @@ export class VElement implements IElementBase
     }
 
     public toReactElement();
-    public toReactElement(React);
+    public toReactElement(React: {createElement: Function});
+    public toReactElement(createElement: Function);
     public toReactElement(React?)
     {
         if (!React)
@@ -258,7 +263,14 @@ export class VElement implements IElementBase
                 children.push(child);
             }
         }
-        return (React.createElement || React)(this.name, this.attrs, children);
+        const attrs = {};
+        for (const name in this.attrs)
+        {
+            const reactName = name.indexOf('data-') == 0 || name.indexOf('aria-') == 0 ?
+                name : name.replace(/-(.)/, c => c.toUpperCase()[1]);
+            attrs[reactName] = this.attrs[name];
+        }
+        return (React.createElement || React)(this.name, attrs, ...children);
     }
 
     public get id(): string
@@ -383,12 +395,12 @@ export class VComment implements IElementBase
 
     public toString(): string
     {
-        return this.text != null ? `<!-- ${this.text} -->` : '<!-- -->';
+        return `<!-- ${this.text != null ? this.text : ''} -->`;
     }
 
     public toElement(): Comment
     {
-        return this.text != null ? document.createComment(this.text) : document.createComment('');
+        return document.createComment(this.text != null ? this.text : '');
     }
 }
 

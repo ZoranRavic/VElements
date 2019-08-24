@@ -4,8 +4,6 @@
     "moduleResolution": "node",
     "module": "commonjs",
     "removeComments": true,
-    "experimentalDecorators" : true,
-    "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports" : true,
     "sourceMap": true,
     "declaration": true

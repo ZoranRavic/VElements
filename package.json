@@ -20,6 +20,7 @@
     "jsx",
     "react",
     "node",
+    "ssr",
     "vnode",
     "dom",
     "vdom"

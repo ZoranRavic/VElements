@@ -61,8 +61,7 @@ export class VElement implements IElementBase
                         {
                             if (value[nsAttr] != null)
                             {
-                                this.attrs[ns] = this.attrs[ns] || {};
-                                this.attrs[ns][nsAttr] = '' + value[nsAttr];
+                                (this.attrs[ns] = this.attrs[ns] || {})[nsAttr] = '' + value[nsAttr];
                             }
                         }
                     }
